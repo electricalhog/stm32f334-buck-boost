@@ -26,8 +26,7 @@ void Application::Init() {
     Hrpwm::SetDuty(Hrpwm::Channel::boost, 30000);
     Hrpwm::SetDuty(Hrpwm::Channel::buck, 0);
 
-    Hrpwm::DriverControl(Hrpwm::Channel::boost, Hrpwm::Status::enable);
-    Hrpwm::DriverControl(Hrpwm::Channel::buck, Hrpwm::Status::enable);
+    Hrpwm::SentEnable(Hrpwm::Status::enable, Hrpwm::Status::enable);
 
     Application::StartHighSpeedProcessing();
     Application::StartLowSpeedProcessing();
@@ -39,7 +38,7 @@ void Application::SetUserSettings (float referenceVoltage, float referenceCurren
 }
 
 void Application::StartHighSpeedProcessing() {
-    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;     
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM3EN;     // Use APB1ENR1 for G474
 
     TIM3->PSC = 36-1;
     TIM3->ARR = 200;
@@ -50,7 +49,7 @@ void Application::StartHighSpeedProcessing() {
 }
 
 void Application::StartLowSpeedProcessing() {
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;     
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;     // Use APB1ENR1 for G474
 
     TIM2->PSC = 36000-1;
     TIM2->ARR = 1000;
@@ -64,7 +63,7 @@ void Application::StartLowSpeedProcessing() {
  * High speed processing #1
  ********************************************************************************/
 
-void sTim3::handler (void) {
+extern "C" void TIM3_IRQHandler(void) {
     TIM3->SR &= ~TIM_SR_UIF;
 
     float result = 0.0f;
@@ -138,6 +137,6 @@ void sTim3::handler (void) {
  * Low speed processing #1
  ********************************************************************************/
 
-void sTim2::handler (void) {
+extern "C" void TIM2_IRQHandler(void) {
     TIM2->SR &= ~TIM_SR_UIF;
 }

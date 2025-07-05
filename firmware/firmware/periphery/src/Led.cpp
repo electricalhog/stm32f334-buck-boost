@@ -17,12 +17,14 @@
 
 void Led::Init (void) {
     Gpio::Init<12,13,14,15>(GPIOB, Gpio::Mode::output, Gpio::Type::PP); 
+    Gpio::Init<5>(GPIOA, Gpio::Mode::output, Gpio::Type::PP); // LED0 on PA5
 };
 
 void Led::On (TypeSignal led) {
     switch (led) {
         case Led::TypeSignal::status:
             Gpio::Set<15>(GPIOB);
+            Gpio::Set<5>(GPIOA); // LED0 on PA5
             break;
         case Led::TypeSignal::overCurrentProtection:
             Gpio::Set<14>(GPIOB);
@@ -38,6 +40,7 @@ void Led::On (TypeSignal led) {
             Gpio::Reset<13>(GPIOB);
             Gpio::Reset<14>(GPIOB);
             Gpio::Reset<15>(GPIOB);
+            Gpio::Reset<5>(GPIOA); // LED0 on PA5
             break;
     }
 };
@@ -46,6 +49,7 @@ void Led::Off (TypeSignal led) {
     switch (led) {
         case Led::TypeSignal::status:
             Gpio::Reset<15>(GPIOB);
+            Gpio::Reset<5>(GPIOA); // LED0 on PA5
             break;
         case Led::TypeSignal::overCurrentProtection:
             Gpio::Reset<14>(GPIOB);
@@ -61,6 +65,7 @@ void Led::Off (TypeSignal led) {
             Gpio::Reset<13>(GPIOB);
             Gpio::Reset<14>(GPIOB);
             Gpio::Reset<15>(GPIOB);
+            Gpio::Reset<5>(GPIOA); // LED0 on PA5
             break;
     }
 };
@@ -69,6 +74,7 @@ void Led::Toggle (TypeSignal led) {
     switch (led) {
         case Led::TypeSignal::status:
             Gpio::Toggle<15>(GPIOB);
+            Gpio::Toggle<5>(GPIOA); // LED0 on PA5
             break;
         case Led::TypeSignal::overCurrentProtection:
             Gpio::Toggle<14>(GPIOB);
@@ -84,6 +90,7 @@ void Led::Toggle (TypeSignal led) {
             Gpio::Reset<13>(GPIOB);
             Gpio::Reset<14>(GPIOB);
             Gpio::Reset<15>(GPIOB);
+            Gpio::Reset<5>(GPIOA); // LED0 on PA5
             break;
     }
 };

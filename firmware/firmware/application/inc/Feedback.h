@@ -35,8 +35,9 @@ class Feedback {
         static float GetOutputCurrent();
 
     private:
-        constexpr static float voltageDiv = 4.9f;
+        constexpr static float voltageDiv = 18.18f;
         constexpr static float sampleStepAdc = 0.000805f;
         constexpr static float currentGain = 50.0f;
-        constexpr static float currentShunt = 0.02f;
+        constexpr static float currentShuntIn = 0.005f;
+        constexpr static float currentShuntOut = 0.012f;
 };

@@ -13,8 +13,7 @@
  * Include 
  ********************************************************************************/
 
-#include "stm32f3xx.h"
-#include "startupF334.h"
+#include "stm32g4xx.h"
 
 #include "Hrpwm.h"
 #include "Pid.h"

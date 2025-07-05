@@ -1,4 +1,3 @@
-
 /********************************************************************************
  * Include 
  ********************************************************************************/
@@ -26,41 +25,52 @@ bool Adc::Status::stopOutputCurrent = false;
  ********************************************************************************/
 
 void Adc::Init() {
-    RCC->AHBENR |= RCC_AHBENR_ADC12EN;
+    // Enable ADC12 clock on STM32G4 (AHB2ENR)
+    RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
 
     Adc::GpioInit();
     Adc::InitTimerEvent();
     Adc::StartCallibrationAdc();
 
-    ADC1->JSQR |= 0x1030817B;               // Lenght = 4, Trigger = event 14, Type trigger = rising edge, Channel = IN1, IN2, IN3 and IN4
+    // Configure injected sequence: 4 conversions, trigger on TIM6 TRGO, rising edge, channels IN1, IN2, IN3, IN4
+    ADC1->JSQR = (3 << ADC_JSQR_JL_Pos) |           // JL: 4 conversions (JL = 3 means 4 conversions)
+                 (0b01101 << ADC_JSQR_JEXTSEL_Pos) |     // JEXTSEL: TIM6_TRGO (see RM0440 Table 100)
+                 (0 << ADC_JSQR_JEXTEN_Pos) |       // JEXTEN: 0 = disabled, 1 = rising edge
+                 (1 << ADC_JSQR_JSQ1_Pos) |         // JSQ1: IN1
+                 (2 << ADC_JSQR_JSQ2_Pos) |         // JSQ2: IN2
+                 (3 << ADC_JSQR_JSQ3_Pos) |         // JSQ3: IN3
+                 (4 << ADC_JSQR_JSQ4_Pos);          // JSQ4: IN4
 
-    ADC1->IER |= ADC_IER_JEOSIE;            // Interrupt enable
+    ADC1->IER |= ADC_IER_JEOSIE;            // Interrupt enable for injected end of sequence
     NVIC_EnableIRQ(ADC1_2_IRQn);            // Enable interrupt ADC1 and ADC2
 
     ADC1->CR |= ADC_CR_ADEN;                // Enable ADC1
-    while(!(ADC1->ISR & ADC_ISR_ADRDY));    // Wait ready ADC1
+    while(!(ADC1->ISR & ADC_ISR_ADRDY));    // Wait until ADC1 is ready
 
-    ADC1->CR |= ADC_CR_JADSTART;            // Enable injector conversion
+    ADC1->CR |= ADC_CR_JADSTART;            // Start injected conversion
 }
 
 void Adc::GpioInit() {
-    Gpio::Init<0,1,2,3,5>(GPIOA, Gpio::Mode::input);
+    // Configure PA0, PA1, PA2, PA3, PA5 as analog (for ADC1 IN1-IN4)
+    Gpio::Init<0,1,2,3>(GPIOA, Gpio::Mode::analog);
 }
 
 void Adc::StartCallibrationAdc() {
+    // Enable ADC voltage regulator
     ADC1->CR &= ~ADC_CR_ADVREGEN;
-    ADC1->CR |= ADC_CR_ADVREGEN_0;      // Enable Vref
-    ADC1->CR &= ~ADC_CR_ADCALDIF;
+    ADC1->CR |= ADC_CR_ADVREGEN; // Set ADVREGEN bit to enable voltage regulator
+    for (volatile int i = 0; i < 1000; ++i); // Short delay for regulator startup
 
-    ADC1->CR |= ADC_CR_ADCAL;           // Start calibration
-    while (ADC1->CR & ADC_CR_ADCAL);    // Wait end calibration
+    ADC1->CR &= ~ADC_CR_ADCALDIF;           // Single-ended calibration
+    ADC1->CR |= ADC_CR_ADCAL;               // Start calibration
+    while (ADC1->CR & ADC_CR_ADCAL);        // Wait for calibration to finish
 }
 
 void Adc::InitTimerEvent() {
-    RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM6EN;   // Enable TIM6 clock (APB1ENR1 for G4)
     TIM6->PSC = 1-1;
     TIM6->ARR = 36;
-    TIM6->CR2 |= TIM_CR2_MMS_1;         // Enable generation TRGO for ADC
+    TIM6->CR2 |= TIM_CR2_MMS_1;             // TRGO on update event
     TIM6->CR1  |= TIM_CR1_CEN;
 }
 
@@ -68,7 +78,7 @@ void Adc::InitTimerEvent() {
  * ADC handler
  ********************************************************************************/
 
-void sAdc::handler (void) {
+extern "C" void ADC1_2_IRQHandler(void) {
     ADC1->ISR |= ADC_ISR_JEOS;  
  
     if (!Adc::Status::stopInputVoltage) { Adc::inputVoltage[Adc::step] = ADC1->JDR1; }

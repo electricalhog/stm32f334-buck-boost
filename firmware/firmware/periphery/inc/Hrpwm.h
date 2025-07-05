@@ -13,7 +13,7 @@
  * Include 
  ********************************************************************************/
 
-#include "stm32f3xx.h"
+#include "stm32g4xx.h"
 #include "Gpio.h"
 
 /********************************************************************************
@@ -37,7 +37,8 @@ class Hrpwm {
     public:
         static void Init();
         static void SetDuty(Channel channel, uint16_t duty);
-        static void DriverControl(Channel channel, Status status);
+        static void SentEnable(Status input_enable, Status output_enable);
+
 
     private:
         static void InitGpio();

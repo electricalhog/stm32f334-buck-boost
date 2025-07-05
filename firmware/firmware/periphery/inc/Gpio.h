@@ -13,7 +13,7 @@
  * Include 
  ********************************************************************************/
 
-#include "stm32f3xx.h"
+#include "stm32g4xx.h"
 
 /********************************************************************************
  * Class Gpio
@@ -47,55 +47,56 @@ class Gpio {
         static inline void Init (GPIO_TypeDef * port = GPIOA, Mode m = Mode::input, Type t = Type::PP, Speed s = Speed::low, Pupd p = Pupd::noPull, AF a = AF::af0) {
 
             if (port == GPIOA)
-                RCC->AHBENR  |= RCC_AHBENR_GPIOAEN;
+                RCC->AHB2ENR  |= RCC_AHB2ENR_GPIOAEN;
             if (port == GPIOB)
-                RCC->AHBENR  |= RCC_AHBENR_GPIOBEN;
+                RCC->AHB2ENR  |= RCC_AHB2ENR_GPIOBEN;
             if (port == GPIOC)
-                RCC->AHBENR  |= RCC_AHBENR_GPIOCEN;
+                RCC->AHB2ENR  |= RCC_AHB2ENR_GPIOCEN;
             if (port == GPIOD)
-                RCC->AHBENR  |= RCC_AHBENR_GPIODEN;
+                RCC->AHB2ENR  |= RCC_AHB2ENR_GPIODEN;
+            if (port == GPIOE)
+                RCC->AHB2ENR  |= RCC_AHB2ENR_GPIOEEN;
             if (port == GPIOF)
-                RCC->AHBENR  |= RCC_AHBENR_GPIOFEN;
+                RCC->AHB2ENR  |= RCC_AHB2ENR_GPIOFEN;
 
+    uint32_t temp1 = 0, temp2 = 0;
+    ((temp1 |= (0b11 << (2*pins))), ... );
+    port->MODER &= ~(temp1);
+    temp1 = 0;
+    ((temp1 |= int(m) << (2*pins)), ... );
+    port->MODER |= temp1;
 
-            uint32_t temp1 = 0, temp2 = 0;
-            ((temp1 |= (0b11 << (2*pins))), ... );
-            port->MODER &= ~(temp1);
-            temp1 = 0;
-            ((temp1 |= int(m) << (2*pins)), ... );
-            port->MODER |= temp1;
+    temp1 = 0;
+    ((temp1 |= (0b1 << (pins))), ... );
+    port->OTYPER &= ~(temp1);
+    temp1 = 0;
+    ((temp1 |= (int(t) << (pins))), ... );
+    port->OTYPER |= temp1;
 
-            temp1 = 0;
-            ((temp1 |= (0b1 << (pins))), ... );
-            port->OTYPER &= ~(temp1);
-            temp1 = 0;
-            ((temp1 |= (int(t) << (pins))), ... );
-            port->OTYPER |= temp1;
+    temp1 = 0;
+    ((temp1|=(0b11 << (2*pins))), ... );
+    port->OSPEEDR &= ~(temp1);
+    temp1 = 0;
+    ((temp1 |= (int(s) << (2*pins))), ... );
+    port->OSPEEDR |= temp1;
 
-            temp1 = 0;
-            ((temp1|=(0b11 << (2*pins))), ... );
-            port->OSPEEDR &= ~(temp1);
-            temp1 = 0;
-            ((temp1 |= (int(s) << (2*pins))), ... );
-            port->OSPEEDR |= temp1;
+    temp1 = 0;
+    ((temp1 |= (0b11 << (2*pins))), ... );
+    port->PUPDR &= ~(temp1);
+    temp1 = 0;
+    ((temp1 |= (int(p) << (2*pins))), ... );
+    port->PUPDR |= temp1;
 
-            temp1 = 0;
-            ((temp1 |= (0b11 << (2*pins))), ... );
-            port->PUPDR &= ~(temp1);
-            temp1 = 0;
-            ((temp1 |= (int(p) << (2*pins))), ... );
-            port->PUPDR |= temp1;
+    temp1 = 0;
+    (((pins < 8?temp1:temp2) |= (0b11 << (4*(pins-(pins<8?0:8))))), ... );
+    port->AFR[0] &= ~temp1;
+    port->AFR[1] &= ~temp2;
 
-            temp1 = 0;
-            (((pins < 8?temp1:temp2) |= (0b11 << (4*(pins-(pins<8?0:8))))), ... );
-            port->AFR[0] &= ~temp1;
-            port->AFR[1] &= ~temp2;
-
-            temp1 = 0;
-            temp2 = 0;
-            (((pins < 8?temp1:temp2) |= (int(a) << (4*(pins-(pins<8?0:8))))), ... );
-            port->AFR[0] |= temp1;
-            port->AFR[1] |= temp2;
+    temp1 = 0;
+    temp2 = 0;
+    (((pins < 8?temp1:temp2) |= (int(a) << (4*(pins-(pins<8?0:8))))), ... );
+    port->AFR[0] |= temp1;
+    port->AFR[1] |= temp2;
 
         }
 

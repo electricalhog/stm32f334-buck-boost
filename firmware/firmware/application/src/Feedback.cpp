@@ -19,7 +19,7 @@ float Feedback::GetInputCurrent() {
     Adc::Status::stopInputCurrent = true;
     float inputCurrent = FilterWindowMedium::Compute(Adc::inputCurrent, Adc::sizeBuffer, sizeWindow);
     Adc::Status::stopInputCurrent = false;
-    return (inputCurrent * Feedback::sampleStepAdc / Feedback::currentGain / Feedback::currentShunt);
+    return (inputCurrent * Feedback::sampleStepAdc / Feedback::currentGain / Feedback::currentShuntOut);
 };
 
 
@@ -34,5 +34,5 @@ float Feedback::GetOutputCurrent() {
     Adc::Status::stopOutputCurrent = true;
     float outputCurrent = FilterWindowMedium::Compute(Adc::outputCurrent, Adc::sizeBuffer, sizeWindow);
     Adc::Status::stopOutputCurrent = false;
-    return (outputCurrent * Feedback::sampleStepAdc / Feedback::currentGain / Feedback::currentShunt);
+    return (outputCurrent * Feedback::sampleStepAdc / Feedback::currentGain / Feedback::currentShuntIn);
 };
