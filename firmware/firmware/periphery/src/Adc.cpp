@@ -27,6 +27,8 @@ bool Adc::Status::stopOutputCurrent = false;
 void Adc::Init() {
     // Enable ADC12 clock on STM32G4 (AHB2ENR)
     RCC->AHB2ENR |= RCC_AHB2ENR_ADC12EN;
+    RCC->CCIPR |= RCC_CCIPR_ADC12SEL_1; // select SYSCLK as peripheral clock for ADC12
+
 
     Adc::GpioInit();
     Adc::InitTimerEvent();
@@ -35,7 +37,7 @@ void Adc::Init() {
     // Configure injected sequence: 4 conversions, trigger on TIM6 TRGO, rising edge, channels IN1, IN2, IN3, IN4
     ADC1->JSQR = (3 << ADC_JSQR_JL_Pos) |           // JL: 4 conversions (JL = 3 means 4 conversions)
                  (0b01101 << ADC_JSQR_JEXTSEL_Pos) |     // JEXTSEL: TIM6_TRGO (see RM0440 Table 100)
-                 (0 << ADC_JSQR_JEXTEN_Pos) |       // JEXTEN: 0 = disabled, 1 = rising edge
+                 (1 << ADC_JSQR_JEXTEN_Pos) |       // JEXTEN: 0 = disabled, 1 = rising edge
                  (1 << ADC_JSQR_JSQ1_Pos) |         // JSQ1: IN1
                  (2 << ADC_JSQR_JSQ2_Pos) |         // JSQ2: IN2
                  (3 << ADC_JSQR_JSQ3_Pos) |         // JSQ3: IN3
@@ -56,9 +58,9 @@ void Adc::GpioInit() {
 }
 
 void Adc::StartCallibrationAdc() {
-    // Enable ADC voltage regulator
-    ADC1->CR &= ~ADC_CR_ADVREGEN;
-    ADC1->CR |= ADC_CR_ADVREGEN; // Set ADVREGEN bit to enable voltage regulator
+    // Enable ADC as per RM0440, Section 21.4.6
+    ADC1->CR &= ~ADC_CR_DEEPPWD;           // Clear DEEPPWD bit to exit deep power-down mode3
+    ADC1->CR |= ADC_CR_ADVREGEN;            // Set ADVREGEN bit to enable voltage regulator
     for (volatile int i = 0; i < 1000; ++i); // Short delay for regulator startup
 
     ADC1->CR &= ~ADC_CR_ADCALDIF;           // Single-ended calibration
