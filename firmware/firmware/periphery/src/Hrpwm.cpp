@@ -4,6 +4,7 @@
  ********************************************************************************/
 
 #include "Hrpwm.h"
+#include <stdint.h>
 
 /********************************************************************************
  * Class HRPWM
@@ -56,7 +57,18 @@ void Hrpwm::Init() {
     HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_B].TIMxCR |= HRTIM_TIMCR_CONT;
 
     // Enable outputs (TA1 and TB1)
-    HRTIM1->sCommonRegs.OENR |= HRTIM_OENR_TA1OEN | HRTIM_OENR_TB1OEN;
+    HRTIM1->sCommonRegs.OENR |= 
+        HRTIM_OENR_TA1OEN  |  // PA8
+        HRTIM_OENR_TA2OEN |  // PA9
+        HRTIM_OENR_TB1OEN  |  // PA10
+        HRTIM_OENR_TB2OEN;   // PA11
+    // Set main output polarity (active high) and complementary (active low)
+    HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_A].OUTxR &= ~(1 << 0); // POL1 = 0
+    HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_A].OUTxR |=  (1 << 1); // NPOL1 = 1
+    
+    HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_B].OUTxR &= ~(1 << 0); // POL1 = 0
+    HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_B].OUTxR |=  (1 << 1); // NPOL1 = 1
+    uint32_t oenr = HRTIM1->sCommonRegs.OENR;
 
     // Set master timer period and enable
     HRTIM1->sMasterRegs.MPER = Hrpwm::periodHrpwm;
@@ -64,8 +76,8 @@ void Hrpwm::Init() {
 };
 
 void Hrpwm::SetDuty(Channel channel, uint16_t duty) {
-    if (channel == Hrpwm::Channel::boost) { HRTIM1->sTimerxRegs[0].CMP1xR = Hrpwm::periodHrpwm - duty; }
-    if (channel == Hrpwm::Channel::buck)  { HRTIM1->sTimerxRegs[1].CMP1xR = duty; }
+    if (channel == Hrpwm::Channel::boost) { HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_A].CMP1xR = Hrpwm::periodHrpwm - duty; }
+    if (channel == Hrpwm::Channel::buck)  { HRTIM1->sTimerxRegs[HRTIM_TIMERINDEX_TIMER_B].CMP1xR = duty; }
 };
 
  void Hrpwm::InitGpio() {
